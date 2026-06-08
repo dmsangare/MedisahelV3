@@ -1,0 +1,6 @@
+{
+  "name": "MediSahel Enterprise V3",
+  "description": "Système d'Information Hospitalier (SIH) complet et local pour établissements de santé : dossier médical électronique, consultations, pharmacie, facturation, laboratoire et RH.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

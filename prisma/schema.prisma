@@ -1,0 +1,378 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  passwordHash String
+  nom          String
+  prenom       String
+  email        String   @unique
+  role         String   // UserRole
+  permissions  String   // JSON string of permissions
+  service      String?
+  refreshToken String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model ClinicSettings {
+  id                 Int      @id @default(1)
+  nomClinique        String
+  logoUrl            String?
+  adresse            String
+  telephone          String
+  email              String
+  siteWeb            String
+  cachetText         String
+  fuseauHoraire      String
+  devise             String
+  langue             String
+  themeColor         String
+}
+
+model Patient {
+  id                  String   @id
+  photoUrl            String?
+  nom                 String
+  prenom              String
+  sexe                String
+  dateNaissance       String
+  profession          String
+  telephone           String
+  adresse             String
+  groupeSanguin       String
+  allergies           String   // JSON string of array
+  antecedentsMedicaux String   // JSON string of array
+  maladiesChroniques  String   // JSON string of array
+  dateCreation        DateTime @default(now())
+  isActive            Boolean  @default(true)
+}
+
+model Appointment {
+  id           String   @id @default(uuid())
+  patientId    String
+  patientName  String
+  medecinId    String
+  medecinName  String
+  date         String
+  heure        String
+  motif        String
+  status       String   // AppointmentStatus
+  notes        String?
+  dateCreation DateTime @default(now())
+}
+
+model Consultation {
+  id                String   @id @default(uuid())
+  patientId         String
+  patientName       String
+  medecinId         String
+  medecinName       String
+  date              String
+  motif             String
+  symptomes         String
+  examenClinique    String
+  diagnostic        String
+  cimCode           String?
+  prescription      String   // JSON string of PrescriptionItem[]
+  documentsGeneres  String   // JSON string of documents details
+  auditLogs         String?
+}
+
+model HospitalisationRecord {
+  id                    String   @id @default(uuid())
+  patientId             String
+  patientName           String
+  batiment              String
+  service               String
+  salle                 String
+  lit                   String
+  dateAdmission         String
+  dateSortie            String?
+  statut                String   // 'Admis' | 'Transféré' | 'Sorti'
+  motifs                String
+  constantes            String   // JSON string of list
+  traitementsAdministres String   // JSON string of list
+}
+
+model UrgenceRecord {
+  id             String   @id @default(uuid())
+  patientId      String?
+  patientName    String
+  ageSimule      String?
+  telephone      String?
+  triage         String   // TriageColor
+  dateAdmission  String
+  motif          String
+  medecinId      String?
+  medecinName    String?
+  statut         String   // 'En attente' | 'Pris en charge' | 'Sortie' | 'Hospitalisé'
+  notesSymptomes String
+}
+
+model LaboratoireExam {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  nom       String
+  categorie String
+  tarif     Float
+}
+
+model LaboratoireTest {
+  id               String   @id @default(uuid())
+  patientId        String
+  patientName      String
+  medecinName      String
+  examId           String
+  examNom          String
+  datePrescription String
+  dateResultat     String?
+  resultats        String?  // JSON string
+  statut           String   // 'Prescrit' | 'Prélèvement' | 'Analyses en cours' | 'Résultats saisis' | 'Validé'
+  laborantinId     String?
+  laborantinNom    String?
+  fichiersJointes  String?  // JSON string of filenames
+}
+
+model ImagerieTest {
+  id               String   @id @default(uuid())
+  patientId        String
+  patientName      String
+  medecinName      String
+  typeExamen       String   // 'Radio' | 'Scanner' | 'IRM' | 'Échographie'
+  detailsExamen    String
+  datePrescription String
+  dateExamen       String?
+  compteRendu      String?
+  statut           String   // 'Prescrit' | 'Réalisé' | 'Interprété'
+  radiologueNom    String?
+  imageUrl         String?
+}
+
+model PharmacieProduct {
+  id             String   @id @default(uuid())
+  code           String   @unique
+  nom            String
+  categorie      String   // 'Médicament' | 'Consommable' | 'Réactif'
+  forme          String?
+  stockActuel    Int
+  seuilCritique  Int
+  prixVente      Float
+  datePeremption String?
+  fournisseurNom String?
+}
+
+model PharmacieStockMove {
+  id         String   @id @default(uuid())
+  productId  String
+  productNom String
+  type       String   // 'Entrée' | 'Sortie'
+  quantite   Int
+  motif      String
+  date       String
+  utilisateur String
+}
+
+model ServiceTarif {
+  id               String   @id @default(uuid())
+  categorie        String   // 'Consultation' | 'Laboratoire' | 'Imagerie' | 'Hospitalisation'
+  nom              String
+  tarif            Float
+  historiqueTarifs String?  // JSON string of history
+}
+
+model Facture {
+  id                         String   @id
+  patientId                  String
+  patientName                String
+  dateEmission               String
+  totalBrut                  Float
+  tauxPriseEnChargeAssurance Float
+  nomAssurance               String?
+  totalPatient               Float
+  totalAssurance             Float
+  statut                     String   // 'Brouillon' | 'Payée' | 'Partiellement Payée' | 'Annulée'
+  remiseValue                Float
+  avoirs                     Float?
+  lignes                     String   // JSON string of invoice lines
+}
+
+model PaymentRecord {
+  id              String   @id @default(uuid())
+  factureId       String
+  patientName     String
+  montant         Float
+  date            String
+  modePaiement    String   // PaymentMethod
+  encaisseurName  String
+  statut          String   // 'Actif' | 'Annulé'
+  motifAnnulation String?
+}
+
+model CaisseSession {
+  id                  String   @id @default(uuid())
+  dateOuverture       String
+  dateCloture         String?
+  caissierName        String
+  soldeInitial        Float
+  fondsEnCaisseSimule Float?
+  ecartsConstates     Float?
+  totalEncaissements  Float
+  totalDecaissements  Float
+  currentSolde        Float
+  statut              String   // 'Ouverte' | 'Clôturée'
+  transactions        String   // JSON string of transaction array
+}
+
+model AssuranceOrganisme {
+  id                        String   @id @default(uuid())
+  nom                       String
+  type                      String   // 'Publique' | 'Privée'
+  tauxPriseEnChargeStandard Float
+  adresse                   String?
+  contact                   String?
+}
+
+model Employee {
+  id              String   @id @default(uuid())
+  nom             String
+  prenom          String
+  role            String   // UserRole
+  sexe            String
+  telephone       String
+  email           String
+  dateEmbauche    String
+  salaireDeBase   Float
+  statutContrat   String   // 'CDI' | 'CDD' | 'Prestataire'
+  dernierePresence String?
+}
+
+model PresenceRecord {
+  id                 String   @id @default(uuid())
+  employeeId         String
+  employeeNomComplet String
+  date               String
+  heureArrivee       String?
+  heureDepart        String?
+  statut             String   // 'Présent' | 'Absent' | 'Retard' | 'Congé' | 'Justifié'
+}
+
+model CongeRecord {
+  id                 String   @id @default(uuid())
+  employeeId         String
+  employeeNomComplet String
+  dateDebut          String
+  dateFin            String
+  type               String   // 'Annuel' | 'Maladie' | 'Maternité' | 'Exceptionnel'
+  statut             String   // 'En attente' | 'Approuvé' | 'Refusé'
+  motif              String
+}
+
+model Fournisseur {
+  id              String   @id @default(uuid())
+  nom             String
+  contact         String
+  telephone       String
+  adresse         String
+  produitsFournis String   // JSON string of array
+}
+
+model BonCommande {
+  id             String   @id @default(uuid())
+  fournisseurNom String
+  dateCommande   String
+  dateReception  String?
+  statut         String   // 'Commandé' | 'Reçu' | 'Payé' | 'Annulé'
+  total          Float
+  items          String   // JSON string of items List
+}
+
+model InventaireItem {
+  id                 String   @id @default(uuid())
+  nom                String
+  categorie          String   // 'Informatique' | 'Matériel médical' | 'Mobilier'
+  quantite           Int
+  etat               String   // 'Excellent' | 'Bon' | 'À réparer' | 'Hors d\'usage'
+  localisation       String
+  derniereMaintenance String?
+}
+
+model CourrierRecord {
+  id                 String   @id @default(uuid())
+  direction          String   // 'Arrivant' | 'Départ'
+  reference          String
+  date               String
+  objet              String
+  nomCorrespondant   String
+  serviceAttributaire String?
+  fichiersJointes    String?  // JSON string
+  archivedAt         String
+}
+
+model AuditLog {
+  id             String   @id @default(uuid())
+  utilisateur    String
+  date           String
+  heure          String
+  action         String
+  module         String
+  description    String
+  adresseIp      String
+  posteUtilise   String
+  ancienneValeur String?
+  nouvelleValeur String?
+}
+
+model DocumentGed {
+  id          String   @id @default(uuid())
+  titre       String
+  description String?
+  categorie   String   // 'Dossier Médical' | 'Contrat' | 'Facture' | 'Courrier' | 'Autre'
+  patientId   String?
+  filename    String
+  fileSize    String
+  mimeType    String
+  uploadedBy  String
+  uploadedAt  DateTime @default(now())
+}
+
+model Batiment {
+  id      String    @id @default(uuid())
+  nom     String    @unique
+  services Service[]
+}
+
+model Service {
+  id         String   @id @default(uuid())
+  nom        String
+  batimentId String
+  batiment   Batiment @relation(fields: [batimentId], references: [id], onDelete: Cascade)
+  salles     Salle[]
+}
+
+model Salle {
+  id        String   @id @default(uuid())
+  nom       String
+  type      String   // 'Consultation' | 'Hospitalisation' | 'Examen' | 'Urgence'
+  serviceId String
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  lits      Lit[]
+}
+
+model Lit {
+  id       String   @id @default(uuid())
+  numLit   String
+  statut   String   // 'Libre' | 'Occupé' | 'Réservé' | 'Maintenance'
+  salleId  String
+  salle    Salle    @relation(fields: [salleId], references: [id], onDelete: Cascade)
+}
