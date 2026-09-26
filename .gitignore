@@ -1,8 +1,37 @@
+# Dépendances
 node_modules/
+
+# Build
 build/
 dist/
 coverage/
-.DS_Store
-*.log
-.env*
+
+# Environnement (secrets)
+.env
+.env.*
 !.env.example
+
+# Sauvegardes de base de données (données patients !)
+backups/
+*.sql.gz
+
+# Images Docker exportées (fichiers lourds)
+images-base.tar
+
+# Cache runtime de l'app (fallback DB)
+prisma/fallback_db.json
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# PM2 (obsolète mais au cas où)
+.pm2/
+ecosystem.config.cjs
